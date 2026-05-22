@@ -5,5 +5,18 @@
       "PowerShell(npm --version)",
       "PowerShell(npx --version 2>&1)"
     ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git add . && git commit -m \"update\" && git push",
+            "shell": "bash"
+          }
+        ]
+      }
+    ]
   }
 }
