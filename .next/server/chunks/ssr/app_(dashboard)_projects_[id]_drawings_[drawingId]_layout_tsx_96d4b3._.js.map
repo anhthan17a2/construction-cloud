@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file://C%3A/Users/thani/Desktop/construction-cloud/app/%28dashboard%29/projects/%5Bid%5D/drawings/%5BdrawingId%5D/layout.tsx"],"sourcesContent":["// Drawing viewer is fullscreen — overlays app shell and project sidebar\nexport default function DrawingViewerLayout({ children }: { children: React.ReactNode }) {\n  return (\n    <div className=\"fixed inset-0 z-50 flex flex-col bg-[#1a1a2e]\">\n      {children}\n    </div>\n  );\n}\n"],"names":[],"mappings":"AAAA,wEAAwE;;;;;;AACzD,SAAS,oBAAoB,EAAE,QAAQ,EAAiC;IACrF,qBACE,8OAAC;QAAI,WAAU;kBACZ;;;;;;AAGP"}},
+    {"offset": {"line": 23, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

@@ -1,0 +1,98 @@
+import NextAuth from "next-auth";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import Credentials from "next-auth/providers/credentials";
+import Google       from "next-auth/providers/google";
+import bcrypt from "bcryptjs";
+import { db } from "./prisma";
+import { z } from "zod";
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(db),
+  session: { strategy: "jwt" },
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
+  providers: [
+    // ── Google OAuth ────────────────────────────────────────────────────────
+    Google({
+      clientId:     process.env.GOOGLE_CLIENT_ID     ?? "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+      allowDangerousEmailAccountLinking: true, // allow linking if email already exists
+    }),
+
+    // ── Email + Password ─────────────────────────────────────────────────────
+    Credentials({
+      credentials: {
+        email:    { label: "Email",    type: "email"    },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const parsed = loginSchema.safeParse(credentials);
+        if (!parsed.success) return null;
+
+        const user = await db.user.findUnique({
+          where: { email: parsed.data.email },
+        });
+        if (!user || !user.password) return null;
+
+        const valid = await bcrypt.compare(parsed.data.password, user.password);
+        if (!valid) return null;
+
+        return { id: user.id, email: user.email, name: user.name, image: user.image, role: user.role };
+      },
+    }),
+  ],
+
+  callbacks: {
+    // Fired on every sign-in — set default role for new OAuth users
+    async signIn({ user, account }) {
+      if (account?.provider === "google" && user.email) {
+        const existing = await db.user.findUnique({ where: { email: user.email } });
+        if (!existing) {
+          // New Google user — will be created by adapter; set role via after-creation hook
+          // We store the intent in the user object for the jwt callback
+          (user as { role?: string }).role = "VIEWER";
+        }
+      }
+      return true;
+    },
+
+    async jwt({ token, user, trigger, session }) {
+      if (user) {
+        token.id   = user.id;
+        token.role = (user as { role?: string }).role;
+      }
+      // Handle session update from client (e.g. role change)
+      if (trigger === "update" && session?.role) {
+        token.role = session.role;
+      }
+      // Always fetch fresh role from DB so role changes take effect immediately
+      if (token.id) {
+        const fresh = await db.user.findUnique({
+          where: { id: token.id as string },
+          select: { role: true, orgId: true },
+        });
+        if (fresh) {
+          token.role  = fresh.role;
+          token.orgId = fresh.orgId;
+        }
+      }
+      return token;
+    },
+
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id                            = token.id   as string;
+        (session.user as { role?:  string }).role  = token.role  as string;
+        (session.user as { orgId?: string }).orgId = token.orgId as string | undefined;
+      }
+      return session;
+    },
+  },
+});
