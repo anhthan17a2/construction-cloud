@@ -108,6 +108,7 @@ export function UploadDrawingModal({ open, onClose, projectId, onSuccess }: Prop
         const blob = await upload(pathname, f.file, {
           access: "public",
           handleUploadUrl: "/api/upload/blob-token",
+          addRandomSuffix: true,
         });
 
         const fileKey = blob.pathname;
