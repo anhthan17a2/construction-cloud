@@ -165,7 +165,7 @@ export function LoginForm() {
           <p className="text-center text-xs text-muted-foreground mt-3 pb-2">
             Demo: <span className="font-medium text-foreground">admin@demo.com</span>
             {" / "}
-            <span className="font-medium text-foreground">password123</span>
+            <span className="font-medium text-foreground">Admin@123</span>
           </p>
         </div>
       </div>
