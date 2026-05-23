@@ -104,11 +104,12 @@ export function UploadDrawingModal({ open, onClose, projectId, onSuccess }: Prop
       updateFile(i, { status: "uploading" });
       try {
         // Upload directly from browser to Vercel Blob (no 4.5MB server limit)
-        const pathname = `projects/${projectId}/drawings/${f.file.name}`;
+        const ext = f.file.name.split(".").pop() ?? "pdf";
+        const uid = crypto.randomUUID();
+        const pathname = `projects/${projectId}/drawings/${uid}.${ext}`;
         const blob = await upload(pathname, f.file, {
           access: "public",
           handleUploadUrl: "/api/upload/blob-token",
-          addRandomSuffix: true,
         });
 
         const fileKey = blob.pathname;
