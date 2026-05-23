@@ -38,20 +38,19 @@ export default async function DrawingViewerPage({
   const latestVersion = drawing.versions[0];
   let fileUrl: string | null = null;
 
-  if (latestVersion?.fileKey) {
+  if (latestVersion) {
     const key = latestVersion.fileKey;
-    if (key.startsWith("uploads/")) {
-      // Local dev file — serve from public directory
+    if (latestVersion.fileUrl?.startsWith("https://")) {
+      // Vercel Blob or any direct HTTPS URL — use as-is
+      fileUrl = latestVersion.fileUrl;
+    } else if (key.startsWith("uploads/")) {
       fileUrl = `${process.env.NEXT_PUBLIC_APP_URL}/${key}`;
-    } else if (key.startsWith("demo/")) {
-      // Seed data — use the stored fileUrl (demo PDF)
-      fileUrl = latestVersion.fileUrl || null;
     } else {
-      // Real S3 key — generate signed URL
+      // Legacy S3 key — try signed URL
       try {
         fileUrl = await generateDownloadUrl(key);
       } catch {
-        fileUrl = latestVersion.fileUrl || null;
+        fileUrl = null;
       }
     }
   }
