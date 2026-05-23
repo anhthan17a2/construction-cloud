@@ -281,12 +281,6 @@ export function LoginForm() {
             </Link>
           </p>
 
-          <div className="mt-4 p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
-            <p className="text-center text-xs text-zinc-400 font-medium mb-1">Tài khoản demo</p>
-            <p className="text-center text-xs text-zinc-600 dark:text-zinc-300 font-mono">
-              admin@demo.com · Admin@123
-            </p>
-          </div>
         </div>
       </div>
     </div>
