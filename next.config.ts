@@ -15,6 +15,13 @@ const nextConfig: NextConfig = {
     config.resolve.alias.encoding = false;
     return config;
   },
+  // Turbopack config (Next.js 15.3+)
+  turbopack: {
+    resolveAlias: {
+      canvas: "./empty-module.ts",
+      encoding: "./empty-module.ts",
+    },
+  },
 };
 
 export default nextConfig;
