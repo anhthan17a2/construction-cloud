@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 // One-time setup endpoint — creates admin user if DB is empty
