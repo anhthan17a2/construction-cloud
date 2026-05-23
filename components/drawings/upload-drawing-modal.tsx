@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { upload } from "@vercel/blob/client";
 import { useDropzone } from "react-dropzone";
 import { Upload, X, FileText, Loader2, CheckCircle2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -102,40 +103,15 @@ export function UploadDrawingModal({ open, onClose, projectId, onSuccess }: Prop
       const f = files[i];
       updateFile(i, { status: "uploading" });
       try {
-        // 1. Get presigned URL (or local upload flag)
-        const presignRes = await fetch("/api/upload/presign", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: f.file.name,
-            contentType: f.file.type,
-            folder: `projects/${projectId}/drawings`,
-          }),
+        // Upload directly from browser to Vercel Blob (no 4.5MB server limit)
+        const pathname = `projects/${projectId}/drawings/${f.file.name}`;
+        const blob = await upload(pathname, f.file, {
+          access: "public",
+          handleUploadUrl: "/api/upload/blob-token",
         });
-        const presignData = await presignRes.json();
 
-        let fileKey: string;
-        let fileUrl: string;
-
-        if (presignData.useLocalUpload) {
-          // Dev mode: upload directly to local API
-          const form = new FormData();
-          form.append("file", f.file);
-          form.append("folder", presignData.folder);
-          const localRes = await fetch("/api/upload/local", { method: "POST", body: form });
-          const localData = await localRes.json();
-          fileKey = localData.fileKey;
-          fileUrl = localData.fileUrl;
-        } else {
-          // Production: upload to S3
-          await fetch(presignData.uploadUrl, {
-            method: "PUT",
-            body: f.file,
-            headers: { "Content-Type": f.file.type },
-          });
-          fileKey = presignData.fileKey;
-          fileUrl = presignData.fileUrl;
-        }
+        const fileKey = blob.pathname;
+        const fileUrl = blob.url;
 
         // 2. Create drawing record
         const res = await fetch("/api/drawings", {
