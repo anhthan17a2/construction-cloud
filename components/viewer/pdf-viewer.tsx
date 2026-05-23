@@ -328,6 +328,12 @@ export function PDFViewer({ drawing, fileUrl, projectId, currentUserId }: Props)
   const dragSnapshotRef  = useRef<AnnotationData | null>(null);
   const hasDraggedRef    = useRef(false);
   const dragHandleRef    = useRef<HandleInfo | null>(null); // null = move, set = resize/vertex
+  // Multi-select lasso refs
+  const selectedSetRef   = useRef<Set<number>>(new Set());
+  const groupSnapshotRef = useRef<AnnotationData[]>([]);
+  const isLassoRef       = useRef(false);
+  const lassoStartRef    = useRef<{ x: number; y: number } | null>(null);
+  const lassoCurrentRef  = useRef<{ x: number; y: number } | null>(null);
   useEffect(() => { colorRef.current       = color;       }, [color]);
   useEffect(() => { strokeWRef.current     = strokeW;     }, [strokeW]);
   useEffect(() => { isFilledRef.current    = isFilled;      }, [isFilled]);
@@ -442,6 +448,31 @@ export function PDFViewer({ drawing, fileUrl, projectId, currentUserId }: Props)
       } else {
         drawAnnotation(ctx, displayAnn, sc);
       }
+    }
+
+    // Draw multi-selection boxes
+    selectedSetRef.current.forEach((i) => {
+      if (i === selIdx) return; // will be drawn below with full handles
+      const a = annRef.current[i];
+      if (a && a.pageNumber === curPageRef.current) {
+        ctx.save();
+        ctx.strokeStyle = "#3B82F6"; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+        drawSelectionBox(ctx, a, sc);
+        ctx.restore();
+      }
+    });
+
+    // Draw lasso rect
+    if (isLassoRef.current && lassoStartRef.current && lassoCurrentRef.current) {
+      const ls = lassoStartRef.current, lc = lassoCurrentRef.current;
+      ctx.save();
+      ctx.strokeStyle = "#3B82F6"; ctx.lineWidth = 1; ctx.setLineDash([5, 3]);
+      ctx.fillStyle = "rgba(59,130,246,0.08)";
+      const lx = Math.min(ls.x, lc.x), ly = Math.min(ls.y, lc.y);
+      const lw = Math.abs(lc.x - ls.x), lh = Math.abs(lc.y - ls.y);
+      ctx.fillRect(lx, ly, lw, lh);
+      ctx.strokeRect(lx, ly, lw, lh);
+      ctx.restore();
     }
 
     // Draw selection box over the selected annotation
@@ -719,23 +750,40 @@ export function PDFViewer({ drawing, fileUrl, projectId, currentUserId }: Props)
       }
 
       if (hitIdx !== null) {
-        selectedIdxRef.current  = hitIdx;
-        setSelectedIndex(hitIdx);
-        isDragging2Ref.current  = true;
-        dragHandleRef.current   = null; // move, not resize
-        dragStartRef2.current   = pos;
-        dragDeltaRef.current    = { dx: 0, dy: 0 };
-        dragSnapshotRef.current = { ...annotations[hitIdx] };
-        hasDraggedRef.current   = false;
-        setPointerCursor("move");
-      } else {
-        if (selectedIdxRef.current !== null) {
-          selectedIdxRef.current = null;
-          setSelectedIndex(null);
-          redrawMarkup(scale);
+        // If clicked annotation is in the multi-select group → group drag
+        if (selectedSetRef.current.size > 1 && selectedSetRef.current.has(hitIdx)) {
+          isDragging2Ref.current  = true;
+          dragHandleRef.current   = null;
+          dragStartRef2.current   = pos;
+          dragDeltaRef.current    = { dx: 0, dy: 0 };
+          hasDraggedRef.current   = false;
+          groupSnapshotRef.current = [...selectedSetRef.current].map((i) => ({ ...annotations[i] }));
+          setPointerCursor("move");
+        } else {
+          // Single annotation select + drag
+          selectedSetRef.current  = new Set([hitIdx]);
+          selectedIdxRef.current  = hitIdx;
+          setSelectedIndex(hitIdx);
+          isDragging2Ref.current  = true;
+          dragHandleRef.current   = null;
+          dragStartRef2.current   = pos;
+          dragDeltaRef.current    = { dx: 0, dy: 0 };
+          dragSnapshotRef.current = { ...annotations[hitIdx] };
+          groupSnapshotRef.current = [];
+          hasDraggedRef.current   = false;
+          setPointerCursor("move");
         }
+      } else {
+        // Start lasso selection on empty space
+        selectedIdxRef.current = null;
+        setSelectedIndex(null);
+        selectedSetRef.current = new Set();
+        isLassoRef.current     = true;
+        lassoStartRef.current  = pos;
+        lassoCurrentRef.current = pos;
         isDragging2Ref.current = false;
         dragHandleRef.current  = null;
+        redrawMarkup(scale);
       }
       return;
     }
@@ -759,10 +807,21 @@ export function PDFViewer({ drawing, fileUrl, projectId, currentUserId }: Props)
     if (tool === "pointer") {
       const pos = getPos(e);
 
-      // ── Drag: move selected annotation in real time (no React re-renders) ──
+      // ── Lasso: update selection rect ──
+      if (isLassoRef.current && lassoStartRef.current) {
+        lassoCurrentRef.current = pos;
+        redrawMarkup(scaleRef.current);
+        return;
+      }
+
+      // ── Drag: move annotation(s) in real time ──
       if (isDragging2Ref.current && dragStartRef2.current !== null) {
-        const dx = (pos.x - dragStartRef2.current.x) / scaleRef.current;
-        const dy = (pos.y - dragStartRef2.current.y) / scaleRef.current;
+        let dx = (pos.x - dragStartRef2.current.x) / scaleRef.current;
+        let dy = (pos.y - dragStartRef2.current.y) / scaleRef.current;
+        // Without Shift: constrain to dominant axis (H or V)
+        if (!isShiftDownRef.current && Math.hypot(dx, dy) * scaleRef.current > 3) {
+          if (Math.abs(dx) >= Math.abs(dy)) dy = 0; else dx = 0;
+        }
         dragDeltaRef.current  = { dx, dy };
         hasDraggedRef.current = Math.hypot(dx, dy) * scaleRef.current > 3;
         redrawMarkup(scaleRef.current);
@@ -866,17 +925,65 @@ export function PDFViewer({ drawing, fileUrl, projectId, currentUserId }: Props)
 
     // ── Pointer mode: commit drag ──────────────────────────────────────────
     if (tool === "pointer") {
+      // ── Lasso complete: select annotations inside rect ──
+      if (isLassoRef.current && lassoStartRef.current && lassoCurrentRef.current) {
+        const ls = lassoStartRef.current, lc = lassoCurrentRef.current;
+        const rx1 = Math.min(ls.x, lc.x) / scaleRef.current;
+        const ry1 = Math.min(ls.y, lc.y) / scaleRef.current;
+        const rx2 = Math.max(ls.x, lc.x) / scaleRef.current;
+        const ry2 = Math.max(ls.y, lc.y) / scaleRef.current;
+        const newSet = new Set<number>();
+        annRef.current.forEach((ann, i) => {
+          if (ann.pageNumber !== curPageRef.current || ann.type === "photo") return;
+          // Use bounding box center to test containment
+          const bbox = getAnnotationBBox(ann, 1);
+          if (bbox) {
+            const cx = bbox.x + bbox.w / 2, cy = bbox.y + bbox.h / 2;
+            if (cx >= rx1 && cx <= rx2 && cy >= ry1 && cy <= ry2) newSet.add(i);
+          }
+        });
+        selectedSetRef.current = newSet;
+        if (newSet.size === 1) {
+          const idx = [...newSet][0];
+          selectedIdxRef.current = idx;
+          setSelectedIndex(idx);
+        } else {
+          selectedIdxRef.current = null;
+          setSelectedIndex(null);
+        }
+        isLassoRef.current      = false;
+        lassoStartRef.current   = null;
+        lassoCurrentRef.current = null;
+        redrawMarkup(scaleRef.current);
+        return;
+      }
+
+      // ── Drag complete ──
       if (isDragging2Ref.current) {
         const { dx, dy } = dragDeltaRef.current;
-        if (hasDraggedRef.current && selectedIdxRef.current !== null && (dx !== 0 || dy !== 0)) {
-          const idx      = selectedIdxRef.current;
-          const snap     = dragSnapshotRef.current!;
-          const handle   = dragHandleRef.current;
-          const newAnn   = handle
-            ? applyHandleDrag(snap, handle, dx, dy)
-            : moveAnnotation(snap, dx, dy);
-          setUndoStack((p) => [...p, annotations]);
-          setAnnotations((prev) => prev.map((a, i) => (i === idx ? newAnn : a)));
+        if (hasDraggedRef.current && (dx !== 0 || dy !== 0)) {
+          // Group move (multi-select)
+          if (selectedSetRef.current.size > 1 && groupSnapshotRef.current.length > 0) {
+            const indices = [...selectedSetRef.current];
+            setUndoStack((p) => [...p, annotations]);
+            setAnnotations((prev) => {
+              const next = [...prev];
+              indices.forEach((i, j) => {
+                next[i] = moveAnnotation(groupSnapshotRef.current[j], dx, dy);
+              });
+              return next;
+            });
+          } else if (selectedIdxRef.current !== null) {
+            // Single annotation move/resize
+            const idx  = selectedIdxRef.current;
+            const snap = dragSnapshotRef.current!;
+            const handle = dragHandleRef.current;
+            const newAnn = handle
+              ? applyHandleDrag(snap, handle, dx, dy)
+              : moveAnnotation(snap, dx, dy);
+            setUndoStack((p) => [...p, annotations]);
+            setAnnotations((prev) => prev.map((a, i) => (i === idx ? newAnn : a)));
+          }
         }
         isDragging2Ref.current  = false;
         dragStartRef2.current   = null;
@@ -884,6 +991,7 @@ export function PDFViewer({ drawing, fileUrl, projectId, currentUserId }: Props)
         dragHandleRef.current   = null;
         dragDeltaRef.current    = { dx: 0, dy: 0 };
         hasDraggedRef.current   = false;
+        groupSnapshotRef.current = [];
         setPointerCursor("default");
       }
       return;
@@ -2690,6 +2798,7 @@ function getAnnotationBBox(ann: AnnotationData, sc: number): { x: number; y: num
   }
   return null;
 }
+
 
 function hitTestAnnotation(pos: {x:number,y:number}, ann: AnnotationData, sc: number): boolean {
   const S = (v: number) => v * sc;
