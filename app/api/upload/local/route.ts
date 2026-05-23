@@ -17,10 +17,6 @@ export async function POST(req: Request) {
   const filename = `${uuidv4()}.${ext}`;
   const pathname = `${folder}/${filename}`;
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return NextResponse.json({ error: "Blob storage not configured. Set BLOB_READ_WRITE_TOKEN." }, { status: 500 });
-  }
-
   const blob = await put(pathname, file, { access: "public" });
 
   return NextResponse.json({ fileKey: blob.pathname, fileUrl: blob.url });
