@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Link from "next/link";
-import { Building2, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, CheckCircle2, FileText, AlertCircle, HardHat, Layers, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,6 @@ const schema = z.object({
 });
 type FormData = z.infer<typeof schema>;
 
-// ── Google SVG icon ───────────────────────────────────────────────────────────
 function GoogleIcon() {
   return (
     <svg viewBox="0 0 24 24" className="w-4 h-4" aria-hidden="true">
@@ -31,12 +30,26 @@ function GoogleIcon() {
   );
 }
 
+const FEATURES = [
+  { icon: Layers,      text: "Quản lý bản vẽ PDF đa tầng với annotation" },
+  { icon: AlertCircle, text: "Theo dõi Issues, RFIs & Punch List real-time" },
+  { icon: HardHat,     text: "Cộng tác thực địa cho đội ngũ MEP" },
+  { icon: FileText,    text: "Báo cáo & xuất tài liệu chuyên nghiệp" },
+  { icon: Shield,      text: "Phân quyền đa cấp theo tổ chức" },
+];
+
+const STATS = [
+  { value: "200+", label: "Dự án" },
+  { value: "50K+", label: "Bản vẽ" },
+  { value: "99.9%", label: "Uptime" },
+];
+
 export function LoginForm() {
   const router      = useRouter();
   const params      = useSearchParams();
   const callbackUrl = params.get("callbackUrl") || "/";
-  const [showPw,    setShowPw]    = useState(false);
-  const [error,     setError]     = useState("");
+  const [showPw,        setShowPw]        = useState(false);
+  const [error,         setError]         = useState("");
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } =
@@ -56,117 +69,224 @@ export function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex bg-background">
-      {/* Left hero panel */}
-      <div className="hidden lg:flex w-1/2 bg-sidebar flex-col justify-between p-12">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-white" />
+    <div className="min-h-screen flex bg-white dark:bg-zinc-950">
+
+      {/* ── Left panel ─────────────────────────────────────────────────────── */}
+      <div className="hidden lg:flex w-[52%] relative overflow-hidden flex-col">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] via-[#1e3a5f] to-[#0f172a]" />
+
+        {/* Blueprint grid overlay */}
+        <svg className="absolute inset-0 w-full h-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#60a5fa" strokeWidth="0.5"/>
+            </pattern>
+            <pattern id="gridBig" width="200" height="200" patternUnits="userSpaceOnUse">
+              <path d="M 200 0 L 0 0 0 200" fill="none" stroke="#60a5fa" strokeWidth="1"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+          <rect width="100%" height="100%" fill="url(#gridBig)" />
+        </svg>
+
+        {/* Glow accent */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col h-full p-12">
+          {/* Logo */}
+          <div className="flex items-center gap-3 mb-auto">
+            <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <svg viewBox="0 0 24 24" className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+            </div>
+            <div>
+              <span className="text-white font-bold text-xl tracking-tight">ConstructionCloud</span>
+              <div className="text-blue-400 text-[10px] font-medium tracking-widest uppercase">MEP Management Platform</div>
+            </div>
           </div>
-          <span className="text-white font-semibold text-lg">ConstructionCloud</span>
-        </div>
-        <div>
-          <blockquote className="text-sidebar-foreground/70 text-xl leading-relaxed mb-6">
-            "Quản lý bản vẽ và cộng tác thực địa cho đội ngũ MEP chuyên nghiệp."
-          </blockquote>
-          <div className="flex gap-2 flex-wrap">
-            {["Sheets","Issues","RFIs","Punch List","Field Reports"].map((f) => (
-              <span key={f} className="text-xs px-3 py-1 rounded-full bg-sidebar-accent text-sidebar-foreground">{f}</span>
+
+          {/* Hero text */}
+          <div className="my-12">
+            <h2 className="text-4xl font-bold text-white leading-tight mb-4">
+              Nền tảng quản lý<br />
+              <span className="text-blue-400">dự án xây dựng</span><br />
+              thế hệ mới
+            </h2>
+            <p className="text-slate-400 text-base leading-relaxed max-w-sm">
+              Cộng tác thực địa, quản lý bản vẽ và theo dõi tiến độ — tất cả trong một nền tảng dành cho đội ngũ MEP chuyên nghiệp.
+            </p>
+          </div>
+
+          {/* Features */}
+          <div className="space-y-3 mb-12">
+            {FEATURES.map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-3.5 h-3.5 text-blue-400" />
+                </div>
+                <span className="text-slate-300 text-sm">{text}</span>
+              </div>
             ))}
           </div>
-        </div>
-        <div className="grid grid-cols-3 gap-4 text-center">
-          {[{v:"200+",l:"Dự án"},{v:"50K+",l:"Bản vẽ"},{v:"12K+",l:"Issue đã xử lý"}].map(s => (
-            <div key={s.l} className="bg-sidebar-accent rounded-xl p-4">
-              <div className="text-2xl font-bold text-white">{s.v}</div>
-              <div className="text-xs text-sidebar-foreground/60 mt-1">{s.l}</div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-3">
+            {STATS.map(({ value, label }) => (
+              <div key={label} className="bg-white/5 border border-white/10 rounded-xl p-4 text-center backdrop-blur-sm">
+                <div className="text-2xl font-bold text-white">{value}</div>
+                <div className="text-slate-400 text-xs mt-0.5">{label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div className="mt-8 pt-6 border-t border-white/10">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-400" />
+              <span className="text-slate-400 text-xs">SOC 2 compliant · 99.9% uptime SLA · Data encrypted at rest</span>
             </div>
-          ))}
+          </div>
         </div>
       </div>
 
-      {/* Right form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-sm">
+      {/* ── Right panel ────────────────────────────────────────────────────── */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-zinc-50 dark:bg-zinc-900">
+        <div className="w-full max-w-[380px]">
+
           {/* Mobile logo */}
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Building2 className="w-4 h-4 text-white" />
+          <div className="flex items-center gap-2.5 mb-10 lg:hidden">
+            <div className="w-9 h-9 rounded-xl bg-blue-500 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
             </div>
-            <span className="font-semibold">ConstructionCloud</span>
+            <span className="font-bold text-lg">ConstructionCloud</span>
           </div>
 
-          <h1 className="text-2xl font-bold mb-1">Đăng nhập</h1>
-          <p className="text-muted-foreground text-sm mb-6">
-            Chào mừng trở lại. Tiếp tục với tài khoản của bạn.
-          </p>
+          {/* Heading */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-1.5">Chào mừng trở lại</h1>
+            <p className="text-zinc-500 dark:text-zinc-400 text-sm">Đăng nhập để tiếp tục làm việc với dự án của bạn.</p>
+          </div>
 
-          {/* Google sign-in */}
-          <Button
+          {/* Google button */}
+          <button
             type="button"
-            variant="outline"
-            className="w-full mb-4 gap-2 font-medium"
             onClick={handleGoogle}
             disabled={googleLoading || isSubmitting}
+            className={cn(
+              "w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700",
+              "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 font-medium text-sm",
+              "hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors shadow-sm",
+              "disabled:opacity-60 disabled:cursor-not-allowed"
+            )}
           >
             {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleIcon />}
             Tiếp tục với Google
-          </Button>
+          </button>
 
-          <div className="relative mb-4">
+          {/* Divider */}
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
+              <div className="w-full border-t border-zinc-200 dark:border-zinc-700" />
             </div>
-            <div className="relative flex justify-center text-xs text-muted-foreground">
-              <span className="bg-background px-2">hoặc đăng nhập bằng email</span>
+            <div className="relative flex justify-center">
+              <span className="bg-zinc-50 dark:bg-zinc-900 px-3 text-xs text-zinc-400">hoặc đăng nhập bằng email</span>
             </div>
           </div>
 
+          {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="name@company.com" autoComplete="email"
-                className={cn(errors.email && "border-destructive")} {...register("email")} />
-              {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+              <Label htmlFor="email" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@company.com"
+                autoComplete="email"
+                className={cn(
+                  "h-10 bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 rounded-xl",
+                  errors.email && "border-red-400 focus-visible:ring-red-400"
+                )}
+                {...register("email")}
+              />
+              {errors.email && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />{errors.email.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Mật khẩu</Label>
-              </div>
+              <Label htmlFor="password" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Mật khẩu
+              </Label>
               <div className="relative">
-                <Input id="password" type={showPw ? "text" : "password"} placeholder="••••••••"
+                <Input
+                  id="password"
+                  type={showPw ? "text" : "password"}
+                  placeholder="••••••••"
                   autoComplete="current-password"
-                  className={cn("pr-10", errors.password && "border-destructive")} {...register("password")} />
-                <button type="button" onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  className={cn(
+                    "h-10 pr-10 bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 rounded-xl",
+                    errors.password && "border-red-400 focus-visible:ring-red-400"
+                  )}
+                  {...register("password")}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw(!showPw)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
+                >
                   {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+              {errors.password && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />{errors.password.message}
+                </p>
+              )}
             </div>
 
             {error && (
-              <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
-                {error}
+              <div className="flex items-center gap-2.5 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 px-4 py-3">
+                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isSubmitting || googleLoading}>
-              {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Đang đăng nhập...</> : "Đăng nhập"}
+            <Button
+              type="submit"
+              className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-sm shadow-blue-500/20 transition-colors"
+              disabled={isSubmitting || googleLoading}
+            >
+              {isSubmitting
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Đang đăng nhập...</>
+                : "Đăng nhập"}
             </Button>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
+          {/* Footer links */}
+          <p className="text-center text-sm text-zinc-500 mt-6">
             Chưa có tài khoản?{" "}
-            <Link href="/register" className="text-primary hover:underline font-medium">Đăng ký</Link>
+            <Link href="/register" className="text-blue-600 hover:text-blue-700 font-medium hover:underline">
+              Đăng ký miễn phí
+            </Link>
           </p>
 
-          <p className="text-center text-xs text-muted-foreground mt-3 pb-2">
-            Demo: <span className="font-medium text-foreground">admin@demo.com</span>
-            {" / "}
-            <span className="font-medium text-foreground">Admin@123</span>
-          </p>
+          <div className="mt-4 p-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
+            <p className="text-center text-xs text-zinc-400 font-medium mb-1">Tài khoản demo</p>
+            <p className="text-center text-xs text-zinc-600 dark:text-zinc-300 font-mono">
+              admin@demo.com · Admin@123
+            </p>
+          </div>
         </div>
       </div>
     </div>
