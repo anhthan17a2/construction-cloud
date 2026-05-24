@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn, DISCIPLINE_LABELS, formatFileSize } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/provider";
 
 const DISCIPLINES = Object.keys(DISCIPLINE_LABELS);
 const SHEET_NUMBER_RE = /^([A-Za-z]{1,4}-\d{2,4}(?:-[A-Za-z0-9]+)?)/;
@@ -63,6 +64,7 @@ interface Props {
 }
 
 export function UploadDrawingModal({ open, onClose, projectId, onSuccess }: Props) {
+  const { t } = useTranslation();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [vsetName, setVsetName] = useState("");
@@ -156,13 +158,13 @@ export function UploadDrawingModal({ open, onClose, projectId, onSuccess }: Prop
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>Upload Sheets</DialogTitle>
+          <DialogTitle>{t("upload.title")}</DialogTitle>
           {/* Step indicator */}
           <div className="flex items-center gap-1 mt-3">
             {[
-              { n: 1, label: "Version Set" },
-              { n: 2, label: "Upload" },
-              { n: 3, label: "Review" },
+              { n: 1, label: t("upload.stepVersionSet") },
+              { n: 2, label: t("upload.stepUpload") },
+              { n: 3, label: t("upload.stepReview") },
             ].map(({ n, label }, i) => (
               <div key={n} className="flex items-center gap-1">
                 <div className={cn(
@@ -185,13 +187,13 @@ export function UploadDrawingModal({ open, onClose, projectId, onSuccess }: Prop
           {step === 1 && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Optionally group sheets in a Version Set (e.g. "IFC Set — May 2026").
+                {t("upload.versionSetHint")}
               </p>
               <div>
-                <Label>Version Set Name (optional)</Label>
+                <Label>{t("upload.versionSetLabel")}</Label>
                 <Input
                   className="mt-1.5"
-                  placeholder="e.g. IFC Set — May 2026"
+                  placeholder={t("upload.versionSetPh")}
                   value={vsetName}
                   onChange={(e) => setVsetName(e.target.value)}
                 />
@@ -206,8 +208,8 @@ export function UploadDrawingModal({ open, onClose, projectId, onSuccess }: Prop
               >
                 <input {...getInputProps()} />
                 <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
-                <p className="text-sm font-medium">Drop PDF files here</p>
-                <p className="text-xs text-muted-foreground mt-1">or click to browse</p>
+                <p className="text-sm font-medium">{t("upload.dropFiles")}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("upload.orBrowse")}</p>
               </div>
             </div>
           )}
@@ -225,7 +227,7 @@ export function UploadDrawingModal({ open, onClose, projectId, onSuccess }: Prop
               >
                 <input {...getInputProps()} />
                 <p className="text-xs text-muted-foreground">
-                  <Upload className="w-3.5 h-3.5 inline mr-1" /> Add more files
+                  <Upload className="w-3.5 h-3.5 inline mr-1" /> {t("upload.addMore")}
                 </p>
               </div>
 
@@ -246,7 +248,7 @@ export function UploadDrawingModal({ open, onClose, projectId, onSuccess }: Prop
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label className="text-[10px]">Sheet Number</Label>
+                      <Label className="text-[10px]">{t("upload.sheetNumber")}</Label>
                       <Input
                         className="h-7 text-xs mt-1 font-mono"
                         value={f.sheetNumber}
@@ -254,7 +256,7 @@ export function UploadDrawingModal({ open, onClose, projectId, onSuccess }: Prop
                       />
                     </div>
                     <div>
-                      <Label className="text-[10px]">Revision</Label>
+                      <Label className="text-[10px]">{t("upload.revision")}</Label>
                       <Input
                         className="h-7 text-xs mt-1 font-mono"
                         value={f.revision}
@@ -262,7 +264,7 @@ export function UploadDrawingModal({ open, onClose, projectId, onSuccess }: Prop
                       />
                     </div>
                     <div className="col-span-2">
-                      <Label className="text-[10px]">Title</Label>
+                      <Label className="text-[10px]">{t("upload.titleField")}</Label>
                       <Input
                         className="h-7 text-xs mt-1"
                         value={f.title}
@@ -270,7 +272,7 @@ export function UploadDrawingModal({ open, onClose, projectId, onSuccess }: Prop
                       />
                     </div>
                     <div className="col-span-2">
-                      <Label className="text-[10px]">Discipline</Label>
+                      <Label className="text-[10px]">{t("upload.discipline")}</Label>
                       <Select
                         value={f.discipline}
                         onValueChange={(v) => updateFile(i, { discipline: v })}
@@ -298,9 +300,9 @@ export function UploadDrawingModal({ open, onClose, projectId, onSuccess }: Prop
             <div className="space-y-2">
               <div className="text-center py-4">
                 <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                <h3 className="font-semibold">Upload Complete</h3>
+                <h3 className="font-semibold">{t("upload.uploadComplete")}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {files.filter((f) => f.status === "done").length} of {files.length} sheets uploaded
+                  {files.filter((f) => f.status === "done").length} / {files.length} {t("upload.uploadedSheets")}
                 </p>
               </div>
               {files.map((f, i) => (
@@ -319,24 +321,24 @@ export function UploadDrawingModal({ open, onClose, projectId, onSuccess }: Prop
         {/* Footer */}
         <div className="flex items-center justify-between pt-4 border-t flex-shrink-0">
           <Button variant="outline" onClick={step > 1 ? () => setStep((s) => (s - 1) as any) : handleClose}>
-            {step === 1 ? "Cancel" : "← Back"}
+            {step === 1 ? t("common.cancel") : `← ${t("common.back")}`}
           </Button>
           {step === 1 && (
             <Button onClick={() => setStep(2)} disabled={files.length === 0}>
-              Next →
+              {t("common.next")} →
             </Button>
           )}
           {step === 2 && (
             <Button onClick={handleUpload} disabled={files.length === 0 || uploading}>
               {uploading ? (
-                <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Uploading...</>
+                <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> {t("common.uploading")}</>
               ) : (
-                `Upload ${files.length} Sheet${files.length !== 1 ? "s" : ""}`
+                t("upload.uploadN", { n: files.length })
               )}
             </Button>
           )}
           {step === 3 && (
-            <Button onClick={handleClose}>Done</Button>
+            <Button onClick={handleClose}>{t("common.done")}</Button>
           )}
         </div>
       </DialogContent>

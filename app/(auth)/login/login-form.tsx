@@ -12,10 +12,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/provider";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 const schema = z.object({
-  email:    z.string().email("Email không hợp lệ"),
-  password: z.string().min(6, "Mật khẩu tối thiểu 6 ký tự"),
+  email:    z.string().email(),
+  password: z.string().min(6),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -30,27 +32,28 @@ function GoogleIcon() {
   );
 }
 
-const FEATURES = [
-  { icon: Layers,      text: "Quản lý bản vẽ PDF đa tầng với annotation" },
-  { icon: AlertCircle, text: "Theo dõi Issues, RFIs & Punch List real-time" },
-  { icon: HardHat,     text: "Cộng tác thực địa cho đội ngũ MEP" },
-  { icon: FileText,    text: "Báo cáo & xuất tài liệu chuyên nghiệp" },
-  { icon: Shield,      text: "Phân quyền đa cấp theo tổ chức" },
-];
-
-const STATS = [
-  { value: "200+", label: "Dự án" },
-  { value: "50K+", label: "Bản vẽ" },
-  { value: "99.9%", label: "Uptime" },
-];
-
 export function LoginForm() {
   const router      = useRouter();
   const params      = useSearchParams();
   const callbackUrl = params.get("callbackUrl") || "/";
+  const { t }       = useTranslation();
   const [showPw,        setShowPw]        = useState(false);
   const [error,         setError]         = useState("");
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  const FEATURES = [
+    { icon: Layers,      text: t("auth.features.drawings") },
+    { icon: AlertCircle, text: t("auth.features.issues") },
+    { icon: HardHat,     text: t("auth.features.field") },
+    { icon: FileText,    text: t("auth.features.reports") },
+    { icon: Shield,      text: t("auth.features.access") },
+  ];
+
+  const STATS = [
+    { value: "200+",  label: t("auth.stats.projects") },
+    { value: "50K+",  label: t("auth.stats.drawings") },
+    { value: "99.9%", label: t("auth.stats.uptime") },
+  ];
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } =
     useForm<FormData>({ resolver: zodResolver(schema) });
@@ -58,7 +61,7 @@ export function LoginForm() {
   const onSubmit = async (data: FormData) => {
     setError("");
     const res = await signIn("credentials", { email: data.email, password: data.password, redirect: false });
-    if (res?.error) { setError("Email hoặc mật khẩu không đúng"); return; }
+    if (res?.error) { setError(t("auth.loginFailed")); return; }
     router.push(callbackUrl);
     router.refresh();
   };
@@ -105,19 +108,19 @@ export function LoginForm() {
             </div>
             <div>
               <span className="text-white font-bold text-xl tracking-tight">ConstructionCloud</span>
-              <div className="text-blue-400 text-[10px] font-medium tracking-widest uppercase">MEP Management Platform</div>
+              <div className="text-blue-400 text-[10px] font-medium tracking-widest uppercase">{t("auth.tagline")}</div>
             </div>
           </div>
 
           {/* Hero text */}
           <div className="my-12">
             <h2 className="text-4xl font-bold text-white leading-tight mb-4">
-              Nền tảng quản lý<br />
-              <span className="text-blue-400">dự án xây dựng</span><br />
-              thế hệ mới
+              {t("auth.heroTitle1")}<br />
+              <span className="text-blue-400">{t("auth.heroTitle2")}</span><br />
+              {t("auth.heroTitle3")}
             </h2>
             <p className="text-slate-400 text-base leading-relaxed max-w-sm">
-              Cộng tác thực địa, quản lý bản vẽ và theo dõi tiến độ — tất cả trong một nền tảng dành cho đội ngũ MEP chuyên nghiệp.
+              {t("auth.heroSubtitle")}
             </p>
           </div>
 
@@ -147,14 +150,19 @@ export function LoginForm() {
           <div className="mt-8 pt-6 border-t border-white/10">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-green-400" />
-              <span className="text-slate-400 text-xs">SOC 2 compliant · 99.9% uptime SLA · Data encrypted at rest</span>
+              <span className="text-slate-400 text-xs">{t("auth.trustBadge")}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* ── Right panel ────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-zinc-50 dark:bg-zinc-900">
+      <div className="flex-1 flex items-center justify-center p-8 bg-zinc-50 dark:bg-zinc-900 relative">
+        {/* Language switcher (top right) */}
+        <div className="absolute top-4 right-4 z-10">
+          <LanguageSwitcher variant="compact" />
+        </div>
+
         <div className="w-full max-w-[380px]">
 
           {/* Mobile logo */}
@@ -170,8 +178,8 @@ export function LoginForm() {
 
           {/* Heading */}
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-1.5">Chào mừng trở lại</h1>
-            <p className="text-zinc-500 dark:text-zinc-400 text-sm">Đăng nhập để tiếp tục làm việc với dự án của bạn.</p>
+            <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-1.5">{t("auth.loginWelcome")}</h1>
+            <p className="text-zinc-500 dark:text-zinc-400 text-sm">{t("auth.loginSubtitle")}</p>
           </div>
 
           {/* Google button */}
@@ -187,7 +195,7 @@ export function LoginForm() {
             )}
           >
             {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleIcon />}
-            Tiếp tục với Google
+            {t("auth.continueGoogle")}
           </button>
 
           {/* Divider */}
@@ -196,7 +204,7 @@ export function LoginForm() {
               <div className="w-full border-t border-zinc-200 dark:border-zinc-700" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-zinc-50 dark:bg-zinc-900 px-3 text-xs text-zinc-400">hoặc đăng nhập bằng email</span>
+              <span className="bg-zinc-50 dark:bg-zinc-900 px-3 text-xs text-zinc-400">{t("auth.orLoginEmail")}</span>
             </div>
           </div>
 
@@ -219,14 +227,14 @@ export function LoginForm() {
               />
               {errors.email && (
                 <p className="text-xs text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />{errors.email.message}
+                  <AlertCircle className="w-3 h-3" />{t("auth.invalidEmail")}
                 </p>
               )}
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="password" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                Mật khẩu
+                {t("auth.password")}
               </Label>
               <div className="relative">
                 <Input
@@ -250,7 +258,7 @@ export function LoginForm() {
               </div>
               {errors.password && (
                 <p className="text-xs text-red-500 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />{errors.password.message}
+                  <AlertCircle className="w-3 h-3" />{t("auth.passwordMin")}
                 </p>
               )}
             </div>
@@ -268,16 +276,16 @@ export function LoginForm() {
               disabled={isSubmitting || googleLoading}
             >
               {isSubmitting
-                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Đang đăng nhập...</>
-                : "Đăng nhập"}
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("auth.loggingIn")}</>
+                : t("auth.loginTitle")}
             </Button>
           </form>
 
           {/* Footer links */}
           <p className="text-center text-sm text-zinc-500 mt-6">
-            Chưa có tài khoản?{" "}
+            {t("auth.noAccount")}{" "}
             <Link href="/register" className="text-blue-600 hover:text-blue-700 font-medium hover:underline">
-              Đăng ký miễn phí
+              {t("auth.register")}
             </Link>
           </p>
 

@@ -12,12 +12,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/provider";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 const schema = z.object({
-  name:    z.string().min(2, "Tên tối thiểu 2 ký tự"),
-  email:   z.string().email("Email không hợp lệ"),
-  company: z.string().min(2, "Nhập tên công ty / tổ chức"),
-  password: z.string().min(8, "Mật khẩu tối thiểu 8 ký tự"),
+  name:    z.string().min(2),
+  email:   z.string().email(),
+  company: z.string().min(2),
+  password: z.string().min(8),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -36,6 +38,7 @@ export function RegisterForm() {
   const router  = useRouter();
   const params  = useSearchParams();
   const invite  = params.get("invite"); // invitation token
+  const { t }   = useTranslation();
   const [showPw, setShowPw] = useState(false);
   const [error,  setError]  = useState("");
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -52,7 +55,7 @@ export function RegisterForm() {
     });
     if (!res.ok) {
       const json = await res.json();
-      setError(json.error || "Đăng ký thất bại");
+      setError(json.error || t("auth.registering"));
       return;
     }
 
@@ -79,10 +82,11 @@ export function RegisterForm() {
           <span className="text-white font-semibold text-lg">ConstructionCloud</span>
         </div>
         <div>
-          <h2 className="text-3xl font-bold text-white mb-4">Quản lý MEP<br/>chuyên nghiệp</h2>
+          <h2 className="text-3xl font-bold text-white mb-4">
+            {t("auth.heroTitle1")}<br/>{t("auth.heroTitle2")}
+          </h2>
           <p className="text-sidebar-foreground/70 leading-relaxed">
-            Nền tảng quản lý bản vẽ thi công, theo dõi issue hiện trường và cộng tác kỹ thuật
-            dành riêng cho đội ngũ MEP. Hỗ trợ đa công ty.
+            {t("auth.heroSubtitle")}
           </p>
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -96,7 +100,10 @@ export function RegisterForm() {
       </div>
 
       {/* Right form */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-8 relative">
+        <div className="absolute top-4 right-4 z-10">
+          <LanguageSwitcher variant="compact" />
+        </div>
         <div className="w-full max-w-sm">
           <div className="flex items-center gap-2 mb-8 lg:hidden">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -105,20 +112,14 @@ export function RegisterForm() {
             <span className="font-semibold">ConstructionCloud</span>
           </div>
 
-          <h1 className="text-2xl font-bold mb-1">
-            {invite ? "Chấp nhận lời mời" : "Tạo tài khoản"}
-          </h1>
-          <p className="text-muted-foreground text-sm mb-6">
-            {invite
-              ? "Điền thông tin để tham gia tổ chức."
-              : "Đăng ký miễn phí. Không cần thẻ tín dụng."}
-          </p>
+          <h1 className="text-2xl font-bold mb-1">{t("auth.registerTitle")}</h1>
+          <p className="text-muted-foreground text-sm mb-6">{t("auth.registerSubtitle")}</p>
 
           {/* Google */}
           <Button type="button" variant="outline" className="w-full mb-4 gap-2 font-medium"
             onClick={handleGoogle} disabled={googleLoading || isSubmitting}>
             {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleIcon />}
-            Đăng ký với Google
+            {t("auth.continueGoogle")}
           </Button>
 
           <div className="relative mb-4">
@@ -126,44 +127,42 @@ export function RegisterForm() {
               <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs text-muted-foreground">
-              <span className="bg-background px-2">hoặc đăng ký bằng email</span>
+              <span className="bg-background px-2">{t("auth.orLoginEmail")}</span>
             </div>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Họ và tên</Label>
-              <Input placeholder="Nguyễn Văn A"
-                className={cn(errors.name && "border-destructive")} {...register("name")} />
-              {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+              <Label>{t("auth.fullName")}</Label>
+              <Input className={cn(errors.name && "border-destructive")} {...register("name")} />
+              {errors.name && <p className="text-xs text-destructive">{t("auth.fullName")}</p>}
             </div>
 
             <div className="space-y-1.5">
-              <Label>Email</Label>
+              <Label>{t("auth.email")}</Label>
               <Input type="email" placeholder="name@company.com"
                 className={cn(errors.email && "border-destructive")} {...register("email")} />
-              {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+              {errors.email && <p className="text-xs text-destructive">{t("auth.invalidEmail")}</p>}
             </div>
 
             <div className="space-y-1.5">
-              <Label>Tên công ty / tổ chức</Label>
-              <Input placeholder="Công ty TNHH ABC" {...register("company")}
-                className={cn(errors.company && "border-destructive")} />
-              {errors.company && <p className="text-xs text-destructive">{errors.company.message}</p>}
-              <p className="text-[11px] text-muted-foreground">Sẽ tạo workspace riêng cho công ty bạn</p>
+              <Label>{t("auth.company")}</Label>
+              <Input {...register("company")} className={cn(errors.company && "border-destructive")} />
+              {errors.company && <p className="text-xs text-destructive">{t("auth.company")}</p>}
+              <p className="text-[11px] text-muted-foreground">{t("auth.companyHint")}</p>
             </div>
 
             <div className="space-y-1.5">
-              <Label>Mật khẩu</Label>
+              <Label>{t("auth.password")}</Label>
               <div className="relative">
-                <Input type={showPw ? "text" : "password"} placeholder="Tối thiểu 8 ký tự"
+                <Input type={showPw ? "text" : "password"}
                   className={cn("pr-10", errors.password && "border-destructive")} {...register("password")} />
                 <button type="button" onClick={() => setShowPw(!showPw)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                   {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+              {errors.password && <p className="text-xs text-destructive">{t("auth.passwordMin")}</p>}
             </div>
 
             {error && (
@@ -174,14 +173,14 @@ export function RegisterForm() {
 
             <Button type="submit" className="w-full" disabled={isSubmitting || googleLoading}>
               {isSubmitting
-                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Đang tạo tài khoản...</>
-                : "Tạo tài khoản"}
+                ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t("auth.registering")}</>
+                : t("auth.registerTitle")}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
-            Đã có tài khoản?{" "}
-            <Link href="/login" className="text-primary hover:underline font-medium">Đăng nhập</Link>
+            {t("auth.hasAccount")}{" "}
+            <Link href="/login" className="text-primary hover:underline font-medium">{t("auth.loginLink")}</Link>
           </p>
         </div>
       </div>

@@ -6,11 +6,6 @@ import { signOut } from "next-auth/react";
 import {
   Building2,
   LayoutDashboard,
-  FileText,
-  CheckSquare,
-  MessageSquareWarning,
-  ClipboardList,
-  Camera,
   Users,
   Settings,
   LogOut,
@@ -26,6 +21,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useTranslation } from "@/lib/i18n/provider";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 interface NavItem {
   label: string;
@@ -34,17 +31,18 @@ interface NavItem {
   badge?: number;
 }
 
-const topNav: NavItem[] = [
-  { label: "Projects", href: "/", icon: LayoutDashboard },
-];
-
-const bottomNav: NavItem[] = [
-  { label: "Settings",     href: "/settings",      icon: Settings },
-  { label: "Quản lý Team", href: "/settings/team", icon: Users    },
-];
-
 export function AppSidebar({ user }: { user: { id?: string; name?: string | null; email?: string | null; image?: string | null } }) {
   const pathname = usePathname();
+  const { t } = useTranslation();
+
+  const topNav: NavItem[] = [
+    { label: t("nav.projects"), href: "/", icon: LayoutDashboard },
+  ];
+
+  const bottomNav: NavItem[] = [
+    { label: t("common.settings"), href: "/settings",      icon: Settings },
+    { label: t("nav.team"),        href: "/settings/team", icon: Users    },
+  ];
 
   return (
     <aside className="w-[220px] flex-shrink-0 flex flex-col bg-sidebar border-r border-sidebar-border overflow-hidden">
@@ -66,11 +64,11 @@ export function AppSidebar({ user }: { user: { id?: string; name?: string | null
 
         <div className="pt-2 pb-1 px-2">
           <span className="text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-wider">
-            Management
+            {t("common.settings")}
           </span>
         </div>
         {[
-          { label: "Admin Panel", href: "/admin", icon: Users },
+          { label: t("nav.adminPanel"), href: "/admin", icon: Users },
         ].map((item) => (
           <NavLink key={item.href} item={item} pathname={pathname} />
         ))}
@@ -81,6 +79,11 @@ export function AppSidebar({ user }: { user: { id?: string; name?: string | null
         {bottomNav.map((item) => (
           <NavLink key={item.href} item={item} pathname={pathname} />
         ))}
+
+        {/* Language switcher */}
+        <div className="px-1 py-1">
+          <LanguageSwitcher variant="full" className="w-full bg-transparent border-sidebar-border text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground text-[12.5px] h-8" />
+        </div>
 
         {/* User menu */}
         <DropdownMenu>
@@ -110,18 +113,18 @@ export function AppSidebar({ user }: { user: { id?: string; name?: string | null
             </div>
             <DropdownMenuItem asChild>
               <Link href="/settings">
-                <Settings className="w-4 h-4 mr-2" /> Profile Settings
+                <Settings className="w-4 h-4 mr-2" /> {t("common.profile")}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Bell className="w-4 h-4 mr-2" /> Notifications
+              <Bell className="w-4 h-4 mr-2" /> {t("nav.fieldReports")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
               onClick={() => signOut({ callbackUrl: "/login" })}
             >
-              <LogOut className="w-4 h-4 mr-2" /> Sign out
+              <LogOut className="w-4 h-4 mr-2" /> {t("common.logout")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -2,6 +2,7 @@
 
 import { ThemeProvider } from "next-themes";
 import { SessionProvider } from "next-auth/react";
+import { I18nProvider } from "@/lib/i18n/provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -11,7 +12,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         defaultTheme="dark"
         disableTransitionOnChange
       >
-        {children}
+        <I18nProvider>{children}</I18nProvider>
       </ThemeProvider>
     </SessionProvider>
   );
