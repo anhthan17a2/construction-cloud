@@ -5,19 +5,16 @@ import Link from "next/link";
 import { TimeAgo } from "@/components/ui/time-ago";
 import {
   FileText,
-  AlertCircle,
-  Users,
   Search,
   Grid3x3,
   List,
   MapPin,
-  Calendar,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn, getInitials, DISCIPLINE_COLORS } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/provider";
 import type { Project, ProjectMember, User } from "@/types";
 
 type ProjectWithCounts = Project & {
@@ -25,14 +22,22 @@ type ProjectWithCounts = Project & {
   _count: { drawings: number; issues: number; rfis: number; punchItems: number };
 };
 
-const STATUS_BADGE: Record<string, { label: string; class: string }> = {
-  ACTIVE: { label: "Active", class: "bg-green-500/10 text-green-500 border-green-500/20" },
-  ON_HOLD: { label: "On Hold", class: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
-  COMPLETED: { label: "Completed", class: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
-  ARCHIVED: { label: "Archived", class: "bg-slate-500/10 text-slate-400 border-slate-500/20" },
+const STATUS_CLASS: Record<string, string> = {
+  ACTIVE:    "bg-green-500/10 text-green-500 border-green-500/20",
+  ON_HOLD:   "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+  COMPLETED: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  ARCHIVED:  "bg-slate-500/10 text-slate-400 border-slate-500/20",
+};
+
+const STATUS_KEY: Record<string, string> = {
+  ACTIVE:    "project.statusActive",
+  ON_HOLD:   "project.statusOnHold",
+  COMPLETED: "project.statusCompleted",
+  ARCHIVED:  "project.statusArchived",
 };
 
 export function ProjectGrid({ projects }: { projects: ProjectWithCounts[] }) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
 
@@ -49,10 +54,8 @@ export function ProjectGrid({ projects }: { projects: ProjectWithCounts[] }) {
         <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
           <FileText className="w-7 h-7 text-muted-foreground" />
         </div>
-        <h2 className="text-lg font-medium mb-1">No projects yet</h2>
-        <p className="text-sm text-muted-foreground">
-          Create your first project to get started.
-        </p>
+        <h2 className="text-lg font-medium mb-1">{t("project.noProjects")}</h2>
+        <p className="text-sm text-muted-foreground">{t("project.noProjectsHint")}</p>
       </div>
     );
   }
@@ -64,7 +67,7 @@ export function ProjectGrid({ projects }: { projects: ProjectWithCounts[] }) {
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
-            placeholder="Search projects..."
+            placeholder={t("project.searchProjects")}
             className="pl-8 h-8 text-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -101,57 +104,54 @@ export function ProjectGrid({ projects }: { projects: ProjectWithCounts[] }) {
           <table className="w-full">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">Project</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">Location</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">Drawings</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">Issues</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">Team</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">Status</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">Updated</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">{t("project.colProject")}</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">{t("project.colLocation")}</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">{t("project.colDrawings")}</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">{t("project.colIssues")}</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">{t("project.colTeam")}</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">{t("project.colStatus")}</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-2.5">{t("project.colUpdated")}</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => {
-                const s = STATUS_BADGE[p.status];
-                return (
-                  <tr key={p.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3">
-                      <Link href={`/projects/${p.id}`} className="flex items-center gap-2 group">
-                        <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-                        <div>
-                          <div className="text-sm font-medium group-hover:text-primary transition-colors">
-                            {p.name}
-                          </div>
-                          <div className="text-[10px] font-mono text-muted-foreground">{p.code}</div>
+              {filtered.map((p) => (
+                <tr key={p.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3">
+                    <Link href={`/projects/${p.id}`} className="flex items-center gap-2 group">
+                      <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
+                      <div>
+                        <div className="text-sm font-medium group-hover:text-primary transition-colors">
+                          {p.name}
                         </div>
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{p.location ?? "—"}</td>
-                    <td className="px-4 py-3 text-sm">{p._count.drawings}</td>
-                    <td className="px-4 py-3 text-sm">{p._count.issues}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex -space-x-1.5">
-                        {p.members.slice(0, 4).map((m) => (
-                          <Avatar key={m.id} className="w-6 h-6 border-2 border-background">
-                            <AvatarImage src={m.user.image ?? undefined} />
-                            <AvatarFallback className="text-[8px] bg-primary text-white">
-                              {getInitials(m.user.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                        ))}
+                        <div className="text-[10px] font-mono text-muted-foreground">{p.code}</div>
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-medium", s.class)}>
-                        {s.label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">
-                      <TimeAgo date={new Date(p.updatedAt)} />
-                    </td>
-                  </tr>
-                );
-              })}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{p.location ?? "—"}</td>
+                  <td className="px-4 py-3 text-sm">{p._count.drawings}</td>
+                  <td className="px-4 py-3 text-sm">{p._count.issues}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex -space-x-1.5">
+                      {p.members.slice(0, 4).map((m) => (
+                        <Avatar key={m.id} className="w-6 h-6 border-2 border-background">
+                          <AvatarImage src={m.user.image ?? undefined} />
+                          <AvatarFallback className="text-[8px] bg-primary text-white">
+                            {getInitials(m.user.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-medium", STATUS_CLASS[p.status])}>
+                      {t(STATUS_KEY[p.status] ?? "project.statusActive")}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    <TimeAgo date={new Date(p.updatedAt)} />
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -161,7 +161,7 @@ export function ProjectGrid({ projects }: { projects: ProjectWithCounts[] }) {
 }
 
 function ProjectCard({ project: p }: { project: ProjectWithCounts }) {
-  const s = STATUS_BADGE[p.status];
+  const { t } = useTranslation();
   return (
     <Link
       href={`/projects/${p.id}`}
@@ -183,8 +183,8 @@ function ProjectCard({ project: p }: { project: ProjectWithCounts }) {
               {p.name}
             </div>
           </div>
-          <span className={cn("text-[9px] px-2 py-0.5 rounded-full border font-medium whitespace-nowrap flex-shrink-0", s.class)}>
-            {s.label}
+          <span className={cn("text-[9px] px-2 py-0.5 rounded-full border font-medium whitespace-nowrap flex-shrink-0", STATUS_CLASS[p.status])}>
+            {t(STATUS_KEY[p.status] ?? "project.statusActive")}
           </span>
         </div>
 
@@ -199,15 +199,15 @@ function ProjectCard({ project: p }: { project: ProjectWithCounts }) {
         <div className="grid grid-cols-3 gap-2 mb-4 py-3 border-y">
           <div className="text-center">
             <div className="text-base font-bold">{p._count.drawings}</div>
-            <div className="text-[9px] text-muted-foreground">Sheets</div>
+            <div className="text-[9px] text-muted-foreground">{t("project.sheets")}</div>
           </div>
           <div className="text-center">
             <div className="text-base font-bold text-red-500">{p._count.issues}</div>
-            <div className="text-[9px] text-muted-foreground">Issues</div>
+            <div className="text-[9px] text-muted-foreground">{t("project.issues")}</div>
           </div>
           <div className="text-center">
             <div className="text-base font-bold text-purple-500">{p._count.rfis}</div>
-            <div className="text-[9px] text-muted-foreground">RFIs</div>
+            <div className="text-[9px] text-muted-foreground">{t("project.rfis")}</div>
           </div>
         </div>
 

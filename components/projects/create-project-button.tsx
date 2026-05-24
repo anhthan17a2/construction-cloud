@@ -17,9 +17,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { useTranslation } from "@/lib/i18n/provider";
 
 const schema = z.object({
-  name: z.string().min(3, "Tên dự án tối thiểu 3 ký tự"),
+  name: z.string().min(3),
   location: z.string().optional(),
   client: z.string().optional(),
   description: z.string().optional(),
@@ -35,6 +36,7 @@ const COLORS = [
 export function CreateProjectButton() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const { t } = useTranslation();
 
   const {
     register,
@@ -65,54 +67,54 @@ export function CreateProjectButton() {
   return (
     <>
       <Button size="sm" onClick={() => setOpen(true)}>
-        <Plus className="w-4 h-4 mr-1.5" /> New Project
+        <Plus className="w-4 h-4 mr-1.5" /> {t("project.newProject")}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Create New Project</DialogTitle>
+            <DialogTitle>{t("project.createTitle")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-4 py-2">
               <div>
-                <Label>Project Name *</Label>
+                <Label>{t("project.projectName")} *</Label>
                 <Input
-                  placeholder="e.g. Da Nang Office Tower"
+                  placeholder={t("project.projectNamePh")}
                   className="mt-1.5"
                   {...register("name")}
                 />
                 {errors.name && (
-                  <p className="text-xs text-destructive mt-1">{errors.name.message}</p>
+                  <p className="text-xs text-destructive mt-1">{t("project.projectNameErr")}</p>
                 )}
               </div>
               <div>
-                <Label>Location</Label>
+                <Label>{t("project.location")}</Label>
                 <Input
-                  placeholder="City, Country"
+                  placeholder={t("project.locationPh")}
                   className="mt-1.5"
                   {...register("location")}
                 />
               </div>
               <div>
-                <Label>Client</Label>
+                <Label>{t("project.client")}</Label>
                 <Input
-                  placeholder="Client name"
+                  placeholder={t("project.clientPh")}
                   className="mt-1.5"
                   {...register("client")}
                 />
               </div>
               <div>
-                <Label>Description</Label>
+                <Label>{t("project.descLabel")}</Label>
                 <Textarea
-                  placeholder="Brief project description..."
+                  placeholder={t("project.descPh")}
                   className="mt-1.5 resize-none"
                   rows={2}
                   {...register("description")}
                 />
               </div>
               <div>
-                <Label>Project Color</Label>
+                <Label>{t("project.projectColor")}</Label>
                 <div className="flex gap-2 mt-2">
                   {COLORS.map((c) => (
                     <button
@@ -130,13 +132,13 @@ export function CreateProjectButton() {
             </div>
             <DialogFooter className="mt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
-                  <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> Creating...</>
+                  <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> {t("project.creating")}</>
                 ) : (
-                  "Create Project"
+                  t("project.createProject")
                 )}
               </Button>
             </DialogFooter>
